@@ -1,0 +1,3 @@
+@function colorOpacity($variable-color, $opacity) {
+    @return rgba(from var($variable-color) r g b / $opacity)
+}

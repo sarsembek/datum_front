@@ -1,0 +1,112 @@
+.input-label{
+    margin-bottom: 15px;
+}
+
+.input-content{
+    width: 300px;
+    height: 35px;
+    position: relative;
+    transition: all 0.5 ease-in;
+    &.range{
+        height: auto;
+    }
+    &.disabled{
+        .input{
+            background: var(--bg-color);
+            color: var(--gray-color);
+            &::placeholder{
+                color: var(--gray-color);
+            }
+        }
+    }
+    .input{
+        position: relative;
+        @include text-mixin;
+        width: 100%;
+        height: 100%;
+        font-family: var(--font-family);
+        border: none;
+        &::placeholder{
+            color: var(--gray-color);
+        }
+        &:hover{
+            border: 1px solid var(--border-color-hover);
+        }
+        &_default{
+            border-radius: 5px;
+            background-color: #343839;
+            border: 1px solid var(--bg-color);
+            // box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+            padding: 0 10px;
+            &::placeholder{
+                text-align: left;
+            }
+            &.focused, &.active{
+                padding: 0 10px;
+                &::placeholder{
+                    text-align: left;
+                }
+            }
+            &.error{
+                border: 1px solid colorOpacity(--error-color-light, 0.7);
+            }
+        }
+        &[type="range"]{
+            cursor: pointer;
+            padding: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--text-color);
+            outline: none;
+            opacity: 0.8;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            &:hover{
+                opacity: 1;
+                border: none;
+            }
+            &::-webkit-slider-thumb {
+                cursor: pointer;
+                border-radius: 100%;
+                -webkit-appearance: none;
+                appearance: none;
+                width: 14px;
+                height: 14px;
+                background: var(--hover-color);
+                &:hover{
+                    width: 18px;
+                    height: 18px;
+                }
+            }
+            &::-moz-range-thumb {
+                cursor: pointer;
+                border-radius: 100%;
+                width: 16px;
+                height: 16px;
+                background: var(--additional-box-blue);
+                &:hover{
+                    width: 18px;
+                    height: 18px;
+                }
+            }
+        }
+    }
+    .password-icon{
+        cursor: pointer;
+        position: absolute;
+        bottom: 3px;
+        right: 16px;
+    }
+}
+
+.input-error{
+    color: var(--text-color);
+    font-size: var(--font-size);
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+    line-height: 140%;
+    margin-top: 5px;
+    color: var(--text-error-color);
+}

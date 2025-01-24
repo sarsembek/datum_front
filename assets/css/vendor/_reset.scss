@@ -1,0 +1,193 @@
+/* Указываем box sizing для всего */
+*,
+*:before,
+*:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+:focus {
+  outline: none;
+}
+
+/* Псевдоэлемент в инпуте IE для очистки текста. Убираем его */
+
+::-ms-clear {
+  display: none;
+}
+
+body {
+  margin: 0;
+  line-height: 1;
+  text-rendering: optimizeLegibility; /*определяет как браузеру оптимизировать рендеринг текста*/
+  text-decoration-skip: objects; /*делает подчеркивание с помощью text-decoration: underline; необрывистым*/
+  -webkit-text-size-adjust: 100%; /*запретить корректировку размера шрифта после изменения ориентации в iOS*/
+  -ms-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased; /*делает текст более тонким в Сафари на Маках*/
+  -webkit-tap-highlight-color: transparent; /*убирает синее подсвечивание при клике на девайсах*/
+  -moz-osx-font-smoothing: grayscale;
+}
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+menu,
+nav,
+section,
+summary {
+  display: block;
+}
+
+/* Элементы a, у которых нет класса, сбрасываем до дефолтных стилей */
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+}
+
+/* Изображения */
+img {
+  display: block;
+  border: 0;
+}
+
+/* Скрытие элементов */
+
+[hidden] {
+  display: none;
+}
+
+/*Правильный курсор при отключенном элементе. Так как задизейбленной кнопкой может быть ссылка, то псевдокласс уже не сработает, 
+так как ссылка не элемент формы. Для этого добавляйте класс.*/
+
+:disabled,
+.disabled {
+  cursor: not-allowed;
+}
+
+/* Очистка потока при использовании float */
+
+.clearfix:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+/* Формы */
+
+button,
+input,
+select,
+textarea {
+  margin: 0;
+}
+
+button,
+html input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+  -webkit-appearance: button;
+  cursor: pointer;
+}
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* Работа с текстом */
+p,
+dd,
+dl,
+figure,
+blockquote {
+  margin: 0;
+}
+
+blockquote,
+q {
+  quotes: none;
+}
+
+ul,
+ol {
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+th {
+  font-weight: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+audio,
+video {
+  display: block;
+}
+
+iframe {
+  border: none;
+}
+
+pre,
+code,
+kbd,
+samp {
+  font-family: monospace, monospace;
+  font-size: inherit;
+}
+
+mark {
+  background: #ff0;
+  color: #000;
+}
+
+small {
+  font-size: 80%;
+}
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sup {
+  top: -0.5em;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+/* SVG */
+
+svg:not(:root) {
+  overflow: hidden;
+}

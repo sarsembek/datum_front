@@ -1,0 +1,85 @@
+@import './vendor/colors.scss';
+
+:root{
+    // Text
+    --text-color: #{$white};
+    --text-color-reverse: #{$dark};
+    --text-active-color: #{$light-blue};
+    --text-error-color: #{$red};
+    --gray-color: #{$dark-gray};
+    --gray-color-two: #{$gray};
+    --hover-color: #{$light-blue};
+    --link: #{$blue-two};
+    --border-hover: #{$blue-two};
+    --success: #{$green};
+    --error-color: #{$dark-red};
+    --error-color-light: #{$light-red};
+
+    // Fonts
+    --font-weight-extrabold: 900;
+    --font-weight-bold: 700;
+    --font-weight-semibold: 600;
+    --font-weight-medium: 500;
+    --font-weight-regular: 400;
+
+    --font-size: 14px;
+    --font-size-xs: 12px;
+    --font-size-md: 16px;
+    --font-size-lg: 20px;
+    --font-size-lg-extra: 28px;
+    --font-size-lg-extra-two: 36px;
+    --font-size-extra: 58px;
+    --font-size-extra-xxl: 96px;
+
+    --line-height: normal;
+
+    --font-family: 'Inter', sans-serif;
+
+    // Background
+    --bg-color: #{$dark-two};
+    --bg-color-two: #{$dark};
+    --bg-color-three: #{$dark-black};
+    --bg-color-reverse: #{$white-gray};
+
+    // Additional elemets
+    --additional-bg: #{$dark};
+    --additional-bg-two: #{$dark-blue};
+    --additional-box: #{$dark-blue-two};
+    --additional-box-border: #{$dark-blue-three};
+    --additional-box-blue: #{$blue};
+
+    --border-color-hover: #{#aaaeb7};
+}
+
+@media (max-width: 1360px) {
+    :root{
+        --font-size-extra-xxl: 72px;
+        --font-size-extra: 44px;
+        --font-size-lg-extra: 28px;
+        --font-size-lg: 20px;
+    }
+}
+
+@media (max-width: 920px) {
+    :root{
+        --font-size-extra-xxl: 54px;
+        --font-size-extra: 34px;
+        --font-size-lg: 18px;
+    }
+}
+
+@media (max-width: 720px) {
+    :root{
+        --font-size-extra-xxl: 42px;
+        --font-size-extra: 28px;
+        --font-size-lg-extra: 22px;
+    }
+}
+
+@media (max-width: 520px) {
+    :root{
+        --font-size-extra-xxl: 32px;
+        --font-size-extra: 24px;
+        --font-size-lg: 16px;
+    }
+}

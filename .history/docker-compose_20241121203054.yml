@@ -1,0 +1,28 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    ports:
+      - "3000:3000"
+    command: "pm2-runtime start npm -- start"
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - '80:80' 
+      - '443:443' 
+    restart: always
+    volumes:
+      - ./nginx/nuxtapp.conf:/etc/nginx/conf.d/nuxtapp.conf
+      - ./certbot/www:/var/www/certbot/
+      - ./certbot/conf:/etc/letsencrypt/
+    depends_on:
+      - web
+  
+  certbot:
+    image: certbot/certbot:latest
+    volumes: 
+      - ./certbot/www/:/var/www/certbot/
+      - ./certbot/conf/:/etc/letsencrypt/

@@ -1,0 +1,79 @@
+@mixin h0-mixin {
+    color: var(--text-color);
+    font-size: 112px;
+    font-style: normal;
+    font-weight: var(--font-weight-extrabold);
+    line-height: var(--line-height);
+}
+
+@mixin h1-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-extra-xxl);
+    font-style: normal;
+    font-weight: var(--font-weight-extrabold);
+    line-height: var(--line-height);
+}
+
+@mixin h2-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-extra);
+    font-style: normal;
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height);
+}
+
+@mixin h3-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-lg-extra-two);
+    font-style: normal;
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height);
+}
+
+@mixin h4-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-lg-extra);
+    font-style: normal;
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height);
+}
+
+@mixin h5-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-lg);
+    font-style: normal;
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height);
+}
+
+@mixin text-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size);
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height);
+}
+
+@mixin text-xs-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-xs);
+    font-style: normal;
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height);
+}
+
+@mixin text-md-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-md);
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height);
+}
+
+@mixin text-lg-mixin {
+    color: var(--text-color);
+    font-size: var(--font-size-lg);
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height);
+}
