@@ -13,7 +13,8 @@ export default defineNuxtConfig({
         name: 'Content-Security-Policy',
         content: 'This is my page description.'
       }]
-    }
+    },
+    pageTransition: { name: 'page', mode: 'out-in' }
   },
 
   optimization: {
@@ -123,7 +124,8 @@ export default defineNuxtConfig({
       FB_CONFIG: process.env.FB_CONFIG,
       BASE_SOCKETS_URL: process.env.BASE_SOCKETS_URL,
       SERVER_URL: process.env.SERVER_URL,
-      REFERER_URL: process.env.REFERER_URL
+      REFERER_URL: process.env.REFERER_URL,
+      LOGIN_URL: 'https://starmake.ai/login'
     }
   },
 

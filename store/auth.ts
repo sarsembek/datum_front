@@ -30,7 +30,7 @@ interface TokenResponse {
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    accessToken: useCookie('boardToken').value || '',
+    accessToken: '',
     refreshToken: useCookie('boardRefreshToken').value || '',
     accessTokenCreatedAt: useCookie('boardAccessTokenCreatedAt').value || null,
     refreshTokenCreatedAt: useCookie('boardRefreshTokenCreatedAt').value || null,
@@ -41,7 +41,7 @@ export const useAuthStore = defineStore('auth', {
     async login ({ email, password }: UserLoginPayloadInterface, isRememberMe: boolean) {
       const { data }: any = await useFetch('/api/v1/auth/login/', {
         method: 'post',
-        headers: { 'Content-Type': 'application/json',  'X-CSRFToken': useCookie('csrftoken').value},
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': useCookie('csrftoken').value || '' },
         body: JSON.stringify({ email, password })
       })
 
@@ -82,6 +82,8 @@ export const useAuthStore = defineStore('auth', {
       if (process.client) {
         this.clearAuthData()
         window.localStorage.removeItem('user')
+        // Redirect to starmake.ai login
+        window.location.href = 'https://starmake.ai/login'
       }
     },
     async userRegistration ({ email, password, firstName, lastName, phone = '' }: UserRegistrationPayloadInterface) {
@@ -133,6 +135,23 @@ export const useAuthStore = defineStore('auth', {
       useCookie('boardAccessTokenCreatedAt').value = null
       useCookie('boardRefreshTokenCreatedAt').value = null
       useCookie('projectId').value = null
+    },
+    getAccessTokenFromCookie() {
+      // Get the token from .starmake.ai domain cookies
+      // This will only work client-side
+      if (process.client) {
+        const cookies = document.cookie.split(';')
+        const tokenCookie = cookies.find(c => c.trim().startsWith('access_token='))
+        if (tokenCookie) {
+          const token = tokenCookie.trim().substring('access_token='.length)
+          this.accessToken = token
+          return token
+        }
+      }
+      return null
+    },
+    isAuthenticated() {
+      return !!this.getAccessTokenFromCookie()
     }
   }
 })
