@@ -10,23 +10,23 @@ interface UserInterface {
   active_project_id: number;
 }
 
-interface UserLoginPayloadInterface {
-  email: string;
-  password: string;
-}
+// interface UserLoginPayloadInterface {
+//   email: string;
+//   password: string;
+// }
 
-interface UserRegistrationPayloadInterface {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-}
+// interface UserRegistrationPayloadInterface {
+//   email: string;
+//   password: string;
+//   firstName: string;
+//   lastName: string;
+//   phone?: string;
+// }
 
-interface TokenResponse {
-  access: string;
-  refresh: string;
-}
+// interface TokenResponse {
+//   access: string;
+//   refresh: string;
+// }
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -35,48 +35,30 @@ export const useAuthStore = defineStore('auth', {
     accessTokenCreatedAt: useCookie('boardAccessTokenCreatedAt').value || null,
     refreshTokenCreatedAt: useCookie('boardRefreshTokenCreatedAt').value || null,
     activeProject: useCookie('projectId').value || null,
-    user: null as UserInterface | null
+    user: null as UserInterface | null,
+    isAuthError: false // Add this flag to track auth state
   }),
   actions: {
-    async login ({ email, password }: UserLoginPayloadInterface, isRememberMe: boolean) {
-      const { data }: any = await useFetch('/api/v1/auth/login/', {
-        method: 'post',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': useCookie('csrftoken').value || '' },
-        body: JSON.stringify({ email, password })
-      })
-
-      if (data.value) {
-        if (!isRememberMe) {
-          this.setTokens(data?.value.access, data?.value.refresh)
-          this.user = data?.value.user
-          this.activeProject = data?.value.user.active_project_id
-          const activeProjectCookie = useCookie('projectId')
-          activeProjectCookie.value = data?.value.user.active_project_id
-        } else {
-          this.setTokens(data?.value.access, data?.value.refresh)
-          this.user = data?.value.user
-          this.activeProject = data?.value.user.active_project_id
-          const activeProjectCookie = useCookie('projectId')
-          activeProjectCookie.value = data?.value.user.active_project_id
+    // Remove or comment out login and registration methods
+    getAccessTokenFromCookie () {
+      // Get the token from .starmake.ai domain cookies
+      // This will only work client-side
+      if (process.client) {
+        const cookies = document.cookie.split(';')
+        const tokenCookie = cookies.find(c => c.trim().startsWith('access_token='))
+        if (tokenCookie) {
+          const token = tokenCookie.trim().substring('access_token='.length)
+          this.accessToken = token
+          this.isAuthError = false
+          return token
         }
-        window.localStorage.setItem('user', JSON.stringify(this.user))
-        return this.user
       }
+      this.isAuthError = true
+      return null
     },
-    async refreshExpiredToken () {
-      const nuxtApp = useNuxtApp()
-      if (nuxtApp.isHydrating) { return }
-      const data = await useAuthFetch<TokenResponse>('/api/v1/token/refresh/', {
-        method: 'post',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh: useCookie('boardRefreshToken').value })
-      })
-
-      const tokens = toRaw(data)
-      if (tokens) {
-        this.setTokens(tokens.access, tokens.refresh)
-      }
-      return tokens
+    isAuthenticated () {
+      const token = this.getAccessTokenFromCookie()
+      return !!token
     },
     logout () {
       if (process.client) {
@@ -86,43 +68,6 @@ export const useAuthStore = defineStore('auth', {
         window.location.href = 'https://starmake.ai/login'
       }
     },
-    async userRegistration ({ email, password, firstName, lastName, phone = '' }: UserRegistrationPayloadInterface) {
-      const store = useAuthStore()
-      const config = useRuntimeConfig()
-      const { data }: any = await useFetch('/api/v1/auth/registration/', {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email,
-          password1: password,
-          password2: password,
-          first_name: firstName,
-          last_name: lastName,
-          phone,
-          referer_url: config.public.REFERER_URL
-        })
-      })
-      if (data.value) {
-        this.setTokens(data?.value.access, data?.value.refresh)
-        store.user = data?.value.user
-        store.activeProject = data?.value.user.active_project_id
-        const activeProjectCookie = useCookie('projectId')
-        activeProjectCookie.value = data?.value.user.active_project_id
-        window.localStorage.setItem('user', JSON.stringify(this.user))
-      }
-    },
-    setTokens (accessToken: string, refreshToken: string) {
-      const store = useAuthStore()
-      const now = new Date().getTime()
-      store.accessTokenCreatedAt = now.toString()
-      store.refreshTokenCreatedAt = now.toString()
-      useCookie('boardToken').value = accessToken
-      useCookie('boardRefreshToken').value = refreshToken
-      useCookie('boardAccessTokenCreatedAt').value = now.toString()
-      useCookie('boardRefreshTokenCreatedAt').value = now.toString()
-    },
     clearAuthData () {
       const store = useAuthStore()
       store.accessToken = ''
@@ -130,28 +75,7 @@ export const useAuthStore = defineStore('auth', {
       store.accessTokenCreatedAt = null
       store.refreshTokenCreatedAt = null
       store.user = null
-      useCookie('boardToken').value = null
-      useCookie('boardRefreshToken').value = null
-      useCookie('boardAccessTokenCreatedAt').value = null
-      useCookie('boardRefreshTokenCreatedAt').value = null
       useCookie('projectId').value = null
-    },
-    getAccessTokenFromCookie() {
-      // Get the token from .starmake.ai domain cookies
-      // This will only work client-side
-      if (process.client) {
-        const cookies = document.cookie.split(';')
-        const tokenCookie = cookies.find(c => c.trim().startsWith('access_token='))
-        if (tokenCookie) {
-          const token = tokenCookie.trim().substring('access_token='.length)
-          this.accessToken = token
-          return token
-        }
-      }
-      return null
-    },
-    isAuthenticated() {
-      return !!this.getAccessTokenFromCookie()
     }
   }
 })

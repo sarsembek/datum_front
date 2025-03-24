@@ -24,4 +24,29 @@ export default defineNuxtPlugin(nuxtApp => {
       return originalFetch(input, init)
     }
   })
+
+  nuxtApp.provide('apiFetch', async (url, options = {}) => {
+    const authStore = useAuthStore()
+    
+    // Get token from cookies
+    const token = authStore.getAccessTokenFromCookie()
+    
+    if (!options.headers) {
+      options.headers = {}
+    }
+    
+    if (token) {
+      options.headers.Authorization = `Bearer ${token}`
+    }
+    
+    try {
+      return await $fetch(url, options)
+    } catch (error) {
+      // Handle auth errors
+      if (error.response?.status === 401) {
+        authStore.isAuthError = true
+      }
+      throw error
+    }
+  })
 })

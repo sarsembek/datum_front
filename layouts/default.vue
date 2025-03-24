@@ -6,6 +6,7 @@
                 <slot />
             </div>
         </div>
+        <AuthError />
     </div>
 </template>
 
