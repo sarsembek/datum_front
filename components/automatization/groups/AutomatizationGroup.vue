@@ -252,7 +252,7 @@ const formattedDate = (automationIndex: number) => {
 }
 
 const changeFolderOrCms = async (e: any) => {
-  const token = useCookie('boardToken').value
+  const token = useCookie('access_token').value
   const id = e.id
   const name = e.name
 
@@ -314,7 +314,7 @@ const changeActiveFolder = async (folderId: number, folderName: string = '') => 
 }
 
 const deleteFolder = async (folderId: number) => {
-  const token = useCookie('boardToken').value
+  const token = useCookie('access_token').value
   const deleteFolderIndex = folders.findIndex((e: any) => e.id === folderId)
   folders.splice(deleteFolderIndex, 1)
   if (folderId === activeFolder.value) {
@@ -331,7 +331,7 @@ const deleteFolder = async (folderId: number) => {
 }
 
 const deleteCms = async (cmsId: number) => {
-  const token = useCookie('boardToken').value
+  const token = useCookie('access_token').value
   const deleteCmsIndex = automations.findIndex((e: any) => e.id === cmsId)
   await useAuthFetch(`/api/v1/cms/automatization/?automatization_id=${cmsId}`, {
     method: 'delete',

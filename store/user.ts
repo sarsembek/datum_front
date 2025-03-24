@@ -4,8 +4,8 @@ import { defineStore } from 'pinia'
 interface UserSettingsInterface {
   email?: string;
   password?: string;
-  name?: string;
-  surname?: string;
+  first_name?: string;
+  last_name?: string;
   phone?: string;
   token: string;
 }
@@ -29,7 +29,7 @@ interface UserInterface {
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    accessToken: useCookie('boardToken').value || '',
+    accessToken: useCookie('access_token').value || '',
     user: null as UserInterface | null
   }),
   actions: {

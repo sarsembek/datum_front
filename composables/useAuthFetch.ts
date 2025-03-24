@@ -10,7 +10,7 @@ export async function useAuthFetch<T> (
   const addAuthorizationHeader = (token: string) => {
     options.headers = {
       ...options.headers,
-      Authorization: token || `Bearer ${useCookie('boardToken').value}`
+      Authorization: token || `Bearer ${useCookie('access_token').value}`
     }
     return options
   }

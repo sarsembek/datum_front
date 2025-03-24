@@ -8,7 +8,7 @@ export const useFbStore = defineStore('integration', {
     fbActivePageId: null as number | null,
     facebookPages: [],
     isFbClientAdding: false,
-    automatizationMessages: []
+    automatizationMessages: [] as { id: number, [key: string]: any }[]
   }),
   actions: {
     async getFacebookUser () {
@@ -67,7 +67,7 @@ export const useFbStore = defineStore('integration', {
       pageAccessToken = null,
       instagramId = null
     ) {
-      const token = useCookie('boardToken')
+      const token = useCookie('access_token')
       if (!this.fbId) {
         this.getFacebookUser()
       }

@@ -142,7 +142,7 @@ onMounted(() => {
 
 const disableFacebook = async () => {
   if (fbAuthenticated.value) {
-    const token = useCookie('boardToken').value
+    const token = useCookie('access_token').value
     await useAuthFetch('/api/v1/integrations/', {
       method: 'delete',
       headers: {
