@@ -89,7 +89,6 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          sourceMap: true,
           additionalData: `
             @use "@/assets/css/mixins/text.scss" as *;
             @use "@/assets/css/mixins/settings.scss" as *;
@@ -101,13 +100,15 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/api/**': { proxy: { to: process.env.BASE_API_URL } }
+    '/api/**': { proxy: { to: process.env.BASE_API_URL || 'https://api.starmake.ai' } }
   },
 
   security: {
     headers: {
       contentSecurityPolicy: false,
-      permissionsPolicy: ['microphone'],
+      permissionsPolicy: {
+        microphone: []
+      },
       crossOriginEmbedderPolicy: 'unsafe-none'
     }
   },
@@ -118,6 +119,10 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
+      // Use AUTH_API_URL as the base for API calls to auth server
+      apiUrl: process.env.AUTH_API_URL || 'https://api.starmake.ai',
+      // Use BASE_API_URL for data API calls
+      dataApiUrl: process.env.BASE_API_URL?.replace('/api/**', '') || 'https://datum.starmake.ai',
       FB_ID: process.env.FB_ID,
       FB_SEECRET: process.env.FB_SEECRET,
       FB_URL: process.env.FB_URL,

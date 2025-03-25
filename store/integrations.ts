@@ -8,11 +8,15 @@ export const useFbStore = defineStore('integration', {
     fbActivePageId: null as number | null,
     facebookPages: [],
     isFbClientAdding: false,
-    automatizationMessages: [] as { id: number, [key: string]: any }[]
+    automatizationMessages: [] as { id: number; [key: string]: any }[]
   }),
   actions: {
     async getFacebookUser () {
       const store = useFbStore()
+      const config = useRuntimeConfig()
+      const dataApiUrl = config.public.dataApiUrl
+
+      // Use the useAuthFetch (which we've updated to handle URLs properly)
       const data: any = await useAuthFetch('/api/v1/integrations/', {
         method: 'get',
         headers: {
@@ -21,6 +25,7 @@ export const useFbStore = defineStore('integration', {
         }
       })
 
+      // The rest of the function remains the same
       if (data) {
         const fbInfo = await data[0]
         if (fbInfo) {
@@ -34,9 +39,12 @@ export const useFbStore = defineStore('integration', {
     },
     async getFacebookPages () {
       if (this.facebookPages.length === 0) {
-        if (!this.fbId) { await this.getFacebookUser() }
+        if (!this.fbId) {
+          await this.getFacebookUser()
+        }
         const data: any = await useAuthFetch(
-          `/api/v1/integrations/instagram-pages/?facebook_integration_id=${this.fbId}`, {
+          `/api/v1/integrations/instagram-pages/?facebook_integration_id=${this.fbId}`,
+          {
             method: 'get',
             headers: {
               'Content-Type': 'application/json; charset=utf-8',
@@ -49,9 +57,12 @@ export const useFbStore = defineStore('integration', {
       return this.facebookPages
     },
     async getInstagramPosts () {
-      if (!this.fbId) { await this.getFacebookUser() }
+      if (!this.fbId) {
+        await this.getFacebookUser()
+      }
       const data: any = await useAuthFetch(
-        `/api/v1/integrations/instagram-posts/?facebook_integration_id=${this.fbId}`, {
+        `/api/v1/integrations/instagram-posts/?facebook_integration_id=${this.fbId}`,
+        {
           method: 'get',
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
@@ -73,7 +84,10 @@ export const useFbStore = defineStore('integration', {
       }
       const data: any = await useAuthFetch('/api/v1/integrations/', {
         method: 'put',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({
           facebook_integration_id: this.fbId,
           access_token: accessToken,
@@ -83,8 +97,12 @@ export const useFbStore = defineStore('integration', {
         })
       })
 
-      if (data) { this.fbId = data.id }
-      if (pageId) { this.isFirstLogin = false }
+      if (data) {
+        this.fbId = data.id
+      }
+      if (pageId) {
+        this.isFirstLogin = false
+      }
     },
     async addFacebookUser (accessToken: string) {
       const data: any = await useAuthFetch('/api/v1/integrations/', {
@@ -112,10 +130,13 @@ export const useFbStore = defineStore('integration', {
       const route = useRoute()
 
       this.isFbClientAdding = true
-      // eslint-disable-next-line max-len
-      const data: any = await $fetch(`https://graph.facebook.com/v19.0/oauth/access_token?client_id=${fbClientId}&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}&code=${route.query.code}`, {
-        method: 'GET'
-      })
+
+      const data: any = await $fetch(
+        `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${fbClientId}&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}&code=${route.query.code}`,
+        {
+          method: 'GET'
+        }
+      )
       if (data) {
         const longToken = await this.createLongLivedToken(data.access_token)
         this.addFacebookUser(longToken)
@@ -128,24 +149,32 @@ export const useFbStore = defineStore('integration', {
       const grantType = 'fb_exchange_token'
       // eslint-disable-next-line max-len
       const params = `grant_type=${grantType}&client_id=${fbClientId}&client_secret=${fbSecret}&fb_exchange_token=${accessToken}`
-      const data: any = await $fetch(`https://graph.facebook.com/oauth/access_token?${params}`, {
-        method: 'GET'
-      })
+      const data: any = await $fetch(
+        `https://graph.facebook.com/oauth/access_token?${params}`,
+        {
+          method: 'GET'
+        }
+      )
       return data.access_token
     },
     async getAutomatizationMessages () {
-      const data: any = await useAuthFetch('/api/v1/integrations/instagram-automatization-message', {
-        method: 'get',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          accept: 'application/json'
+      const data: any = await useAuthFetch(
+        '/api/v1/integrations/instagram-automatization-message',
+        {
+          method: 'get',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            accept: 'application/json'
+          }
         }
-      })
+      )
       this.automatizationMessages = data
       return this.automatizationMessages
     },
     changeAutomatizationMessage (id: number, data: any) {
-      const automatizationMessageIndex = this.automatizationMessages.findIndex(message => message.id === id)
+      const automatizationMessageIndex = this.automatizationMessages.findIndex(
+        message => message.id === id
+      )
       this.automatizationMessages[automatizationMessageIndex] = data
     },
     addAutomatizationMessage (e: any) {

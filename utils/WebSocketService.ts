@@ -32,7 +32,7 @@ export class WebSocketService {
 
     this.socket.onclose = (event) => {
       this.handleInfo('Соединение WebSocket закрыто.')
-      console.info(event);
+      console.info(event)
       this.socket = null
     }
 

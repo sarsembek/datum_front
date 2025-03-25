@@ -378,8 +378,6 @@ onMounted(() => {
   resizeCanvas()
 })
 
-
-
 // onUnmounted(() => {
 //
 //
