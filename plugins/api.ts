@@ -28,7 +28,8 @@ export default defineNuxtPlugin((nuxtApp) => {
         if (url.startsWith('/api')) {
           // Transform /api/v1/resource to https://datum.starmake.ai/api/v1/resource
           const apiPath = url.substring(4) // Remove /api prefix
-          const baseUrl = apiPath.includes('/auth/')
+          // FIXED: Only use apiUrl for refresh-token, use dataApiUrl for everything else
+          const baseUrl = apiPath.includes('/auth/refresh-token')
             ? config.public.apiUrl
             : config.public.dataApiUrl
 
@@ -38,6 +39,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             : apiPath
 
           url = `${baseUrl}${fullPath}`
+          console.log('Transformed URL:', url) // Debug the URL
 
           // Update the input with the new URL
           if (typeof input === 'string') {
@@ -84,16 +86,24 @@ export default defineNuxtPlugin((nuxtApp) => {
       const authStore = useAuthStore()
 
       // Determine the correct base URL based on the endpoint
-      // Remove /api prefix if present
       let fullUrl = url
       if (url.startsWith('/api')) {
         const apiPath = url.substring(4)
-        const baseUrl = apiPath.includes('/auth/')
+
+        // FIXED: Only use apiUrl for refresh-token, use dataApiUrl for everything else
+        const baseUrl = apiPath.includes('/auth/refresh-token')
           ? config.public.apiUrl
           : config.public.dataApiUrl
 
-        fullUrl = `${baseUrl}${apiPath}`
+        // Make sure v1 endpoints have /api in the path
+        const fullPath = apiPath.startsWith('/v1/') && !baseUrl.endsWith('/api')
+          ? `/api${apiPath}`
+          : apiPath
+
+        fullUrl = `${baseUrl}${fullPath}`
       }
+
+      console.log('apiFetch requesting:', fullUrl) // Debug URL
 
       // Include credentials to send cookies in cross-origin requests
       options.credentials = 'include'

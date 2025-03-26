@@ -9,9 +9,10 @@ export async function useAuthFetch<T> (
   const config = useRuntimeConfig()
   const authStore = useAuthStore()
 
-  // Determine the correct base URL based on the endpoint
-  const baseUrl = url.includes('/auth/')
-    ? config.public.apiUrl
+  // FIXED: Only use apiUrl for refresh-token, use dataApiUrl for everything else
+  // Including /api/v1/auth/ endpoints
+  const baseUrl = url.includes('/auth/refresh-token')
+    ? config.public.apiUrl  
     : config.public.dataApiUrl
 
   // Fix URL path construction by preserving /api prefix when needed
@@ -29,11 +30,11 @@ export async function useAuthFetch<T> (
 
   // Construct the full URL
   const fullUrl = `${baseUrl}${apiPath}`
+  
+  console.log('Making API request to:', fullUrl) // Debug the URL
 
   // Include credentials to send cookies in cross-origin requests
   options.credentials = 'include'
-
-  // Remove auth header logic - rely solely on cookies
   
   try {
     const response = await $fetch(fullUrl, {
@@ -45,6 +46,8 @@ export async function useAuthFetch<T> (
 
     return response
   } catch (e: any) {
+    console.error('API request failed:', fullUrl, e.statusCode || e.message)
+    
     // If unauthorized, try to refresh token
     if (e.statusCode === 401) {
       try {

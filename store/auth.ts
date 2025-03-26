@@ -72,8 +72,10 @@ export const useAuthStore = defineStore('auth', {
     async refreshExpiredToken () {
       try {
         const config = useRuntimeConfig()
+        // Token refresh SHOULD use AUTH_API_URL
         const AUTH_API_URL = config.public.apiUrl
 
+        console.log('Refreshing token from:', `${AUTH_API_URL}/auth/refresh-token`)
         // Using withCredentials to send cookies
         const response = await axios.get(`${AUTH_API_URL}/auth/refresh-token`, {
           withCredentials: true // This is critical for cross-domain cookie usage
@@ -83,7 +85,7 @@ export const useAuthStore = defineStore('auth', {
         if (response.data.payload) {
           // Update user information if needed
           if (response.data.payload.user_id && !this.user) {
-            // Optionally fetch user info if needed
+            // User info should come from DATA_API_URL, not AUTH_API_URL
             await this.fetchUserInfo(response.data.payload.user_id)
           }
 
@@ -102,10 +104,12 @@ export const useAuthStore = defineStore('auth', {
     async fetchUserInfo (userId: number) {
       try {
         const config = useRuntimeConfig()
-        const API_URL = config.public.apiUrl
+        // Use dataApiUrl for user info, not apiUrl
+        const API_URL = config.public.dataApiUrl
 
-        // Use axios with withCredentials instead of Authorization header
-        const response = await axios.get(`${API_URL}/users/${userId}`, {
+        console.log('Fetching user info from:', `${API_URL}/api/v1/users/${userId}`)
+        // Use axios with withCredentials
+        const response = await axios.get(`${API_URL}/api/v1/users/${userId}`, {
           withCredentials: true
         })
 
