@@ -125,7 +125,7 @@ const config = useRuntimeConfig()
 
 const { getFacebookUser, addFacebookUser } = useFbStore()
 const { fbAuthenticated, fbId } = storeToRefs(useFbStore())
-const facebookRedirectUri = config.public.FB_URL + '/settings'
+const facebookRedirectUri = config.public.FB_URL + '/cms'
 const fbClientId = config.public.FB_ID
 const fbConfigId = config.public.FB_CONFIG
 const fbSecret = config.public.FB_SEECRET
