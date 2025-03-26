@@ -135,8 +135,10 @@ const route = useRoute()
 
 onMounted(() => {
   if (route.query.code && !fbAuthenticated.value) {
+    console.log('facebookPooling started')
     facebookPooling()
   }
+  console.log('getFacebookUser started')
   getFacebookUser()
 })
 
@@ -189,8 +191,15 @@ const facebookPooling = async () => {
   const data: any = await $fetch(`https://graph.facebook.com/v19.0/oauth/access_token?client_id=${fbClientId}&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}&code=${route.query.code}`, {
     method: 'GET'
   })
+  console.log('code', route.query.code)
+  console.log('data short', data)
+  console.log('fbClientId', fbClientId)
+  console.log('facebookRedirectUri', facebookRedirectUri)
+  console.log('fbSecret', fbSecret)
+  console.log('fbConfigId', fbConfigId)
   if (data) {
     const longToken = await createLongLivedToken(data.access_token)
+    console.log('longToken', longToken)
     addFacebookUser(longToken)
   }
 }
@@ -199,9 +208,11 @@ const createLongLivedToken = async (accessToken: any) => {
   const grantType = 'fb_exchange_token'
   // eslint-disable-next-line max-len
   const params = `grant_type=${grantType}&client_id=${fbClientId}&client_secret=${fbSecret}&fb_exchange_token=${accessToken}`
+  console.log('params', params)
   const data: any = await $fetch(`https://graph.facebook.com/oauth/access_token?${params}`, {
     method: 'GET'
   })
+  console.log('data long', data)
   return data.access_token
 }
 
