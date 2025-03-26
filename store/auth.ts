@@ -31,15 +31,29 @@ export const useAuthStore = defineStore('auth', {
       // Get the token from .starmake.ai domain cookies
       // This will only work client-side
       if (process.client) {
-        const cookies = document.cookie.split(';')
-        const tokenCookie = cookies.find(c =>
-          c.trim().startsWith('access_token=')
-        )
-        if (tokenCookie) {
-          const token = tokenCookie.trim().substring('access_token='.length)
-          this.accessToken = token
-          this.isAuthError = false
-          return token
+        try {
+          const cookies = document.cookie.split(';')
+          // More flexible cookie search - case insensitive, handles spacing
+          const tokenCookie = cookies.find((c) => {
+            const trimmed = c.trim()
+            return trimmed.toLowerCase().startsWith('access_token=') ||
+              trimmed.startsWith('access_token=')
+          })
+          if (tokenCookie) {
+            const parts = tokenCookie.trim().split('=')
+            if (parts.length >= 2) {
+              const token = parts.slice(1).join('=') // Handle = in token value
+              console.log('Found token in cookie:', token.substring(0, 10) + '...')
+              this.accessToken = token
+              this.isAuthError = false
+              return token
+            }
+          } else {
+            console.warn('No access_token cookie found. Available cookies:',
+              cookies.map(c => c.trim().split('=')[0]).join(', '))
+          }
+        } catch (error) {
+          console.error('Error accessing cookies:', error)
         }
       }
       this.isAuthError = true

@@ -37,7 +37,12 @@ export default defineNuxtPlugin((nuxtApp) => {
             ? config.public.apiUrl
             : config.public.dataApiUrl
 
-          url = `${baseUrl}${apiPath}`
+          // Make sure we have /api in the path for v1 endpoints
+          const fullPath = apiPath.startsWith('/v1/') && !baseUrl.endsWith('/api')
+            ? `/api${apiPath}`
+            : apiPath
+
+          url = `${baseUrl}${fullPath}`
 
           // Update the input with the new URL
           if (typeof input === 'string') {

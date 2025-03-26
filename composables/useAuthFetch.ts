@@ -8,14 +8,24 @@ export async function useAuthFetch<T> (
 ): Promise<any> {
   const config = useRuntimeConfig()
   const authStore = useAuthStore()
+
   // Determine the correct base URL based on the endpoint
-  // Auth endpoints go to apiUrl, data endpoints go to dataApiUrl
   const baseUrl = url.includes('/auth/')
     ? config.public.apiUrl
     : config.public.dataApiUrl
 
-  // Remove /api prefix if the URL starts with it and we're using a full base URL
-  const apiPath = url.startsWith('/api') ? url.substring(4) : url
+  // Fix URL path construction by preserving /api prefix when needed
+  let apiPath = url
+  if (url.startsWith('/api/')) {
+    apiPath = url.substring(4) // Remove /api prefix
+  } else if (!url.startsWith('/')) {
+    apiPath = `/${url}` // Ensure leading slash
+  }
+
+  // Make sure v1 endpoints have /api in the path
+  if (apiPath.startsWith('/v1/') && !baseUrl.endsWith('/api')) {
+    apiPath = `/api${apiPath}`
+  }
 
   // Construct the full URL
   const fullUrl = `${baseUrl}${apiPath}`

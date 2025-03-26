@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useAuthStore } from './auth'
 
 export const useFbStore = defineStore('integration', {
   state: () => ({
@@ -78,10 +79,14 @@ export const useFbStore = defineStore('integration', {
       pageAccessToken = null,
       instagramId = null
     ) {
-      const token = useCookie('access_token')
+      // Get token from auth store instead of creating a new cookie
+      const authStore = useAuthStore()
+      const token = authStore.getAccessTokenFromCookie()
+
       if (!this.fbId) {
-        this.getFacebookUser()
+        await this.getFacebookUser()
       }
+
       const data: any = await useAuthFetch('/api/v1/integrations/', {
         method: 'put',
         headers: {
@@ -132,7 +137,9 @@ export const useFbStore = defineStore('integration', {
       this.isFbClientAdding = true
 
       const data: any = await $fetch(
-        `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${fbClientId}&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}&code=${route.query.code}`,
+        `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${fbClientId}` +
+        `&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}` +
+        `&code=${route.query.code}`,
         {
           method: 'GET'
         }
