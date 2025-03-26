@@ -27,7 +27,7 @@ export const useAuthStore = defineStore('auth', {
     isAuthError: false // Flag to track auth state
   }),
   actions: {
-    getAccessTokenFromCookie () {
+    getAccessTokenFromCookie (setErrorState = true) {
       // Get the token from .starmake.ai domain cookies
       // This will only work client-side
       if (process.client) {
@@ -39,7 +39,7 @@ export const useAuthStore = defineStore('auth', {
             return trimmed.toLowerCase().startsWith('access_token=') ||
               trimmed.startsWith('access_token=')
           })
-          
+
           if (tokenCookie) {
             const parts = tokenCookie.trim().split('=')
             if (parts.length >= 2) {
@@ -57,11 +57,16 @@ export const useAuthStore = defineStore('auth', {
           console.error('Error accessing cookies:', error)
         }
       }
-      this.isAuthError = true
+
+      // Only set error state when explicitly requested
+      if (setErrorState) {
+        this.isAuthError = true
+      }
       return null
     },
     isAuthenticated () {
-      const token = this.getAccessTokenFromCookie()
+      // Pass false to avoid setting error state during routine checks
+      const token = this.getAccessTokenFromCookie(false)
       return !!token
     },
     async refreshExpiredToken () {
@@ -98,12 +103,12 @@ export const useAuthStore = defineStore('auth', {
       try {
         const config = useRuntimeConfig()
         const API_URL = config.public.apiUrl
-        
+
         // Use axios with withCredentials instead of Authorization header
         const response = await axios.get(`${API_URL}/users/${userId}`, {
           withCredentials: true
         })
-        
+
         if (response.data) {
           this.user = response.data
         }

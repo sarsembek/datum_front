@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { useAuthStore } from './auth'
 
 export const useFbStore = defineStore('integration', {
   state: () => ({

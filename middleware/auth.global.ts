@@ -4,13 +4,16 @@ export default defineNuxtRouteMiddleware((to) => {
   const authStore = useAuthStore()
 
   if (process.client) {
-    // Check if user is authenticated by extracting token from cookies
-    const token = authStore.getAccessTokenFromCookie()
+    // Check token without setting error state
+    const token = authStore.getAccessTokenFromCookie(false)
 
-    // Set the auth error state instead of redirecting
+    // Only set error state for protected routes that need authentication
     if (!token && to.meta.requiresAuth !== false) {
       authStore.isAuthError = true
       // No redirect - we'll show a message instead
+    } else {
+      // If token exists or route doesn't require auth, ensure error state is cleared
+      authStore.isAuthError = false
     }
   }
 })

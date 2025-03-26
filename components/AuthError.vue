@@ -1,6 +1,6 @@
 <template>
     <div
-        v-if="authStore.isAuthError"
+        v-if="shouldShowError"
         class="auth-error">
         <div class="auth-error__container">
             <h2 class="auth-error__title">Authentication Required</h2>
@@ -15,9 +15,52 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/store/auth'
 
 const authStore = useAuthStore()
+const apiCheckInProgress = ref(false)
+
+// Only show error if auth error is set AND we're not in middle of an API check
+const shouldShowError = computed(() => {
+  return authStore.isAuthError && !apiCheckInProgress.value
+})
+
+// Check if we have pending requests before showing the error
+onMounted(async () => {
+  if (authStore.isAuthError) {
+    apiCheckInProgress.value = true
+    // Try a lightweight API call to verify auth status
+    try {
+      await useAuthFetch('/api/v1/auth/user/', { method: 'get' })
+      // If API call succeeds, clear error state
+      authStore.isAuthError = false
+    } catch (e) {
+      // If API call fails, keep error state
+    } finally {
+      apiCheckInProgress.value = false
+    }
+  }
+})
+
+// Watch for changes to error state
+watch(() => authStore.isAuthError, (newVal) => {
+  if (newVal === true) {
+    // Verify error with API call when state changes to true
+    apiCheckInProgress.value = true
+    useAuthFetch('/api/v1/auth/user/', { method: 'get' })
+      .then(() => {
+        // If API call succeeds, clear error state
+        authStore.isAuthError = false
+      })
+      .catch(() => {
+        // If API call fails, keep error state
+      })
+      .finally(() => {
+        apiCheckInProgress.value = false
+      })
+  }
+})
 
 function redirectToLogin () {
   window.location.href = 'https://starmake.ai/login'

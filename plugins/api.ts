@@ -6,7 +6,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   // Intercept all fetch requests
   if (process.client) {
     nuxtApp.hook('app:created', () => {
-      const authStore = useAuthStore()
+      // const authStore = useAuthStore()
       const originalFetch = window.fetch
 
       window.fetch = function (input, init) {
@@ -19,7 +19,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
         // Include credentials to send cookies in cross-origin requests
         init.credentials = 'include'
-        
+
         // Remove auth header - rely solely on cookies
 
         // Check if this is an API request to our backend
