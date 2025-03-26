@@ -79,10 +79,6 @@ export const useFbStore = defineStore('integration', {
       pageAccessToken = null,
       instagramId = null
     ) {
-      // Get token from auth store instead of creating a new cookie
-      const authStore = useAuthStore()
-      const token = authStore.getAccessTokenFromCookie()
-
       if (!this.fbId) {
         await this.getFacebookUser()
       }
@@ -90,8 +86,8 @@ export const useFbStore = defineStore('integration', {
       const data: any = await useAuthFetch('/api/v1/integrations/', {
         method: 'put',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
+          // Remove Authorization header - rely solely on cookies
         },
         body: JSON.stringify({
           facebook_integration_id: this.fbId,
@@ -141,7 +137,8 @@ export const useFbStore = defineStore('integration', {
         `&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}` +
         `&code=${route.query.code}`,
         {
-          method: 'GET'
+          method: 'GET',
+          credentials: 'include' // Add this to include cookies
         }
       )
       if (data) {
@@ -159,7 +156,8 @@ export const useFbStore = defineStore('integration', {
       const data: any = await $fetch(
         `https://graph.facebook.com/oauth/access_token?${params}`,
         {
-          method: 'GET'
+          method: 'GET',
+          credentials: 'include' // Add this to include cookies
         }
       )
       return data.access_token

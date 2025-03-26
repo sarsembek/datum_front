@@ -17,15 +17,10 @@ export default defineNuxtPlugin((nuxtApp) => {
           init.headers = {}
         }
 
-        // Get token from cookies
-        const token = authStore.getAccessTokenFromCookie()
-        if (token) {
-          // Add authorization header
-          init.headers = {
-            ...init.headers,
-            Authorization: `Bearer ${token}`
-          }
-        }
+        // Include credentials to send cookies in cross-origin requests
+        init.credentials = 'include'
+        
+        // Remove auth header - rely solely on cookies
 
         // Check if this is an API request to our backend
         let url = typeof input === 'string' ? input : (input as Request).url
@@ -100,20 +95,8 @@ export default defineNuxtPlugin((nuxtApp) => {
         fullUrl = `${baseUrl}${apiPath}`
       }
 
-      // Get token from cookies
-      const token = authStore.getAccessTokenFromCookie()
-      if (!options.headers) {
-        options.headers = {}
-      }
-
-      if (token) {
-        if (options.headers instanceof Headers) {
-          options.headers.set('Authorization', `Bearer ${token}`)
-        } else {
-          (options.headers as Record<string, string>).Authorization =
-            `Bearer ${token}`
-        }
-      }
+      // Include credentials to send cookies in cross-origin requests
+      options.credentials = 'include'
 
       try {
         return await $fetch(fullUrl, options)

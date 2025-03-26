@@ -39,11 +39,12 @@ export const useAuthStore = defineStore('auth', {
             return trimmed.toLowerCase().startsWith('access_token=') ||
               trimmed.startsWith('access_token=')
           })
+          
           if (tokenCookie) {
             const parts = tokenCookie.trim().split('=')
             if (parts.length >= 2) {
               const token = parts.slice(1).join('=') // Handle = in token value
-              console.log('Found token in cookie:', token.substring(0, 10) + '...')
+              // Store token value for authentication checks only, not for headers
               this.accessToken = token
               this.isAuthError = false
               return token
@@ -65,13 +66,12 @@ export const useAuthStore = defineStore('auth', {
     },
     async refreshExpiredToken () {
       try {
-        // The API_URL should be defined in your nuxt.config.ts
         const config = useRuntimeConfig()
         const AUTH_API_URL = config.public.apiUrl
 
         // Using withCredentials to send cookies
         const response = await axios.get(`${AUTH_API_URL}/auth/refresh-token`, {
-          withCredentials: true
+          withCredentials: true // This is critical for cross-domain cookie usage
         })
 
         // No need to handle cookies - the server sets them
@@ -98,15 +98,12 @@ export const useAuthStore = defineStore('auth', {
       try {
         const config = useRuntimeConfig()
         const API_URL = config.public.apiUrl
-        const token = this.getAccessTokenFromCookie()
-        if (!token) {
-          return null
-        }
+        
+        // Use axios with withCredentials instead of Authorization header
         const response = await axios.get(`${API_URL}/users/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          withCredentials: true
         })
+        
         if (response.data) {
           this.user = response.data
         }

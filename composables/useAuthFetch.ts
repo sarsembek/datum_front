@@ -30,18 +30,11 @@ export async function useAuthFetch<T> (
   // Construct the full URL
   const fullUrl = `${baseUrl}${apiPath}`
 
-  const addAuthorizationHeader = () => {
-    // Get token from cookie directly
-    const token = authStore.getAccessTokenFromCookie()
-    options.headers = {
-      ...options.headers,
-      Authorization: `Bearer ${token}`
-    }
-    return options
-  }
+  // Include credentials to send cookies in cross-origin requests
+  options.credentials = 'include'
 
-  addAuthorizationHeader()
-
+  // Remove auth header logic - rely solely on cookies
+  
   try {
     const response = await $fetch(fullUrl, {
       ...(options as NitroFetchOptions<
@@ -56,8 +49,8 @@ export async function useAuthFetch<T> (
     if (e.statusCode === 401) {
       try {
         await authStore.refreshExpiredToken()
-        options = addAuthorizationHeader()
-
+        
+        // Try the request again, cookies will be sent automatically
         const response2 = await $fetch(fullUrl, {
           ...(options as NitroFetchOptions<
             string,
