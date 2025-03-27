@@ -123,42 +123,33 @@ export const useFbStore = defineStore('integration', {
       return data
     },
     async facebookPooling () {
-      const config = useRuntimeConfig()
-      const facebookRedirectUri = config.public.FB_URL + '/cms'
-      const fbSecret = config.public.FB_SEECRET
-      const fbClientId = config.public.FB_ID
       const route = useRoute()
-
+      console.log(route.query.code, 'code of facebook')
       this.isFbClientAdding = true
 
       const data: any = await $fetch(
-        `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${fbClientId}` +
-        `&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}` +
-        `&code=${route.query.code}`,
+        `/api/v1/integrations/get-token/?code=${route.query.code}`,
         {
           method: 'GET',
           credentials: 'include' // Add this to include cookies
         }
       )
+      console.log(data, 'data short')
       if (data) {
         const longToken = await this.createLongLivedToken(data.access_token)
         this.addFacebookUser(longToken)
       }
     },
     async createLongLivedToken (accessToken: any) {
-      const config = useRuntimeConfig()
-      const fbClientId = config.public.FB_ID
-      const fbSecret = config.public.FB_SEECRET
-      const grantType = 'fb_exchange_token'
       // eslint-disable-next-line max-len
-      const params = `grant_type=${grantType}&client_id=${fbClientId}&client_secret=${fbSecret}&fb_exchange_token=${accessToken}`
       const data: any = await $fetch(
-        `https://graph.facebook.com/oauth/access_token?${params}`,
+        `/api/v1/integrations/get-long-lived-token/?access_token=${accessToken}`,
         {
           method: 'GET',
           credentials: 'include' // Add this to include cookies
         }
       )
+      console.log(data, 'data long')
       return data.access_token
     },
     async getAutomatizationMessages () {
