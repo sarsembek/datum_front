@@ -188,17 +188,13 @@ const facebookAuth = () => {
 }
 
 const facebookPooling = async () => {
-  // eslint-disable-next-line max-len
-  const data: any = await $fetch(`https://graph.facebook.com/v19.0/oauth/access_token?client_id=${fbClientId}&redirect_uri=${facebookRedirectUri}&client_secret=${fbSecret}&code=${route.query.code}`, {
+  // Use our backend endpoint instead of directly calling Facebook
+  const data: any = await $fetch(`/api/v1/integrations/get-token/?code=${route.query.code}`, {
     method: 'GET'
   })
   console.log('code', route.query.code)
   console.log('data short', data)
-  console.log('fbClientId', fbClientId)
-  console.log('facebookRedirectUri', facebookRedirectUri)
-  console.log('fbSecret', fbSecret)
-  console.log('fbConfigId', fbConfigId)
-  if (data) {
+  if (data && data.access_token) {
     const longToken = await createLongLivedToken(data.access_token)
     console.log('longToken', longToken)
     addFacebookUser(longToken)
@@ -206,11 +202,8 @@ const facebookPooling = async () => {
 }
 
 const createLongLivedToken = async (accessToken: any) => {
-  const grantType = 'fb_exchange_token'
-  // eslint-disable-next-line max-len
-  const params = `grant_type=${grantType}&client_id=${fbClientId}&client_secret=${fbSecret}&fb_exchange_token=${accessToken}`
-  console.log('params', params)
-  const data: any = await $fetch(`https://graph.facebook.com/oauth/access_token?${params}`, {
+  // Use our backend endpoint instead of directly calling Facebook
+  const data: any = await $fetch(`/api/v1/integrations/get-long-lived-token/?access_token=${accessToken}`, {
     method: 'GET'
   })
   console.log('data long', data)
