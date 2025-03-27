@@ -11,64 +11,85 @@ interface UserInterface {
   active_project_id: number;
 }
 
-// interface TokenPayload {
-//   email: string;
-//   user_id: number;
-//   exp: number;
-//   refresh_exp?: number;
-// }
-
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     accessToken: '',
     accessTokenCreatedAt: null,
     activeProject: useCookie('projectId').value || null,
     user: null as UserInterface | null,
-    isAuthError: false // Flag to track auth state
+    isAuthError: false, // Flag to track auth state
+    isCheckingAuth: false
   }),
   actions: {
-    getAccessTokenFromCookie (setErrorState = true) {
-      // Get the token from .starmake.ai domain cookies
-      // This will only work client-side
-      if (process.client) {
-        try {
-          const cookies = document.cookie.split(';')
-          // More flexible cookie search - case insensitive, handles spacing
-          const tokenCookie = cookies.find((c) => {
-            const trimmed = c.trim()
-            return trimmed.toLowerCase().startsWith('access_token=') ||
-              trimmed.startsWith('access_token=')
-          })
+    // Instead of trying to access HTTP-only cookie, we'll check auth status with an API call
+    async checkAuthentication (setErrorState = true) {
+      // Avoid multiple simultaneous checks
+      if (this.isCheckingAuth) {
+        return !this.isAuthError
+      }
 
-          if (tokenCookie) {
-            const parts = tokenCookie.trim().split('=')
-            if (parts.length >= 2) {
-              const token = parts.slice(1).join('=') // Handle = in token value
-              // Store token value for authentication checks only, not for headers
-              this.accessToken = token
-              this.isAuthError = false
-              return token
-            }
-          } else {
-            console.warn('No access_token cookie found. Available cookies:',
-              cookies.map(c => c.trim().split('=')[0]).join(', '))
-          }
-        } catch (error) {
-          console.error('Error accessing cookies:', error)
+      try {
+        this.isCheckingAuth = true
+
+        if (this.user) {
+          // If we have user data, assume we're authenticated
+          this.isAuthError = false
+          return true
         }
+
+        const config = useRuntimeConfig()
+        const API_URL = config.public.dataApiUrl
+
+        // Make a lightweight auth check request that will succeed if cookie is valid
+        const response = await axios.get(`${API_URL}/api/v1/auth/check`, {
+          withCredentials: true
+        }).catch((error) => {
+          if (error.response?.status === 404) {
+            // If endpoint doesn't exist, try another one
+            return axios.get(`${API_URL}/api/v1/auth/user`, {
+              withCredentials: true
+            })
+          }
+          throw error
+        })
+
+        if (response.status === 200) {
+          if (response.data) {
+            // Store user data if available
+            this.user = response.data
+          }
+          this.isAuthError = false
+          return true
+        }
+
+        // If we get here, request didn't fail but we're not sure about auth status
+        if (setErrorState) {
+          this.isAuthError = true
+        }
+        return false
+      } catch (error) {
+        console.log('Authentication check failed:', error)
+
+        // Only set error state when explicitly requested
+        if (setErrorState) {
+          this.isAuthError = true
+        }
+        return false
+      } finally {
+        this.isCheckingAuth = false
+      }
+    },
+
+    isAuthenticated () {
+      // If we have user data, we can assume we're authenticated
+      if (this.user) {
+        return true
       }
 
-      // Only set error state when explicitly requested
-      if (setErrorState) {
-        this.isAuthError = true
-      }
-      return null
+      // Otherwise check without setting error state
+      return this.checkAuthentication(false)
     },
-    isAuthenticated () {
-      // Pass false to avoid setting error state during routine checks
-      const token = this.getAccessTokenFromCookie(false)
-      return !!token
-    },
+
     async refreshExpiredToken () {
       try {
         const config = useRuntimeConfig()
@@ -100,6 +121,7 @@ export const useAuthStore = defineStore('auth', {
         return false
       }
     },
+
     // Optional: Fetch user info if needed
     async fetchUserInfo (userId: number) {
       try {
@@ -122,6 +144,7 @@ export const useAuthStore = defineStore('auth', {
         return null
       }
     },
+
     logout () {
       if (process.client) {
         this.clearAuthData()
@@ -130,6 +153,7 @@ export const useAuthStore = defineStore('auth', {
         window.location.href = 'https://starmake.ai/login'
       }
     },
+
     clearAuthData () {
       this.accessToken = ''
       this.accessTokenCreatedAt = null
