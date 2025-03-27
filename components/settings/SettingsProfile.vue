@@ -55,6 +55,37 @@
                 </div>
             </div>
         </div>
+        
+        <div class="unit">
+            <div class="unit__info">
+                <div class="title">
+                    Управление токеном
+                </div>
+                <div class="subtitle">
+                    Обновите токен аутентификации, если у вас возникают проблемы с доступом к системе или требуется продлить сессию без повторного входа.
+                </div>
+            </div>
+            <div class="unit__functional">
+                <div class="item">
+                    <div v-if="tokenInfo" class="token-info">
+                        <p><strong>Статус:</strong> {{ tokenInfo.status }}</p>
+                        <p v-if="tokenInfo.expiration"><strong>Срок действия до:</strong> {{ tokenInfo.expiration }}</p>
+                    </div>
+                    
+                    <p v-if="tokenMessage" :class="['token-message', tokenMessage.type]">
+                        {{ tokenMessage.text }}
+                    </p>
+                    
+                    <button-custom
+                        default
+                        :value="isRefreshing ? 'Обновление...' : 'Обновить токен'"
+                        :disabled="isRefreshing"
+                        @click="refreshToken"
+                    />
+                </div>
+            </div>
+        </div>
+        
         <div class="unit">
             <div class="unit__info">
                 <div class="title">
@@ -123,10 +154,103 @@ import 'vue3-toastify/dist/index.css'
 import { required, email, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { useUserStore } from '~/store/user'
+import { useAuthStore } from '~/store/auth'
+
 const user = process.server ? await useUserStore().getUser() : JSON.parse(window.localStorage.getItem('user'))
-
 const { userChangeSettings } = useUserStore()
+const authStore = useAuthStore()
 
+// Token refresh functionality
+const isRefreshing = ref(false)
+const tokenMessage = ref(null)
+const tokenInfo = ref(null)
+
+// Check token status on component mount
+onMounted(async () => {
+  checkTokenStatus()
+})
+
+async function checkTokenStatus() {
+  const token = authStore.getAccessTokenFromCookie(false)
+  if (token) {
+    tokenInfo.value = {
+      status: 'Активен',
+      expiration: 'Информация недоступна'
+    }
+  } else {
+    tokenInfo.value = {
+      status: 'Отсутствует или истек',
+      expiration: null
+    }
+  }
+}
+
+async function refreshToken() {
+  try {
+    isRefreshing.value = true
+    tokenMessage.value = { type: 'info', text: 'Обновление токена...' }
+    
+    const result = await authStore.refreshExpiredToken()
+    
+    if (result) {
+      tokenMessage.value = { 
+        type: 'success', 
+        text: 'Токен успешно обновлен. Время действия токена продлено.' 
+      }
+      
+      // Update token info
+      tokenInfo.value = {
+        status: 'Активен (обновлен)',
+        expiration: 'Обновлено только что'
+      }
+      
+      toast('Токен успешно обновлен!', {
+        theme: 'dark',
+        type: 'success',
+        position: 'bottom-right',
+        transition: 'flip'
+      })
+    } else {
+      tokenMessage.value = { 
+        type: 'error', 
+        text: 'Не удалось обновить токен. Попробуйте еще раз или выполните повторный вход в систему.' 
+      }
+      
+      toast('Ошибка обновления токена', {
+        theme: 'dark',
+        type: 'error',
+        position: 'bottom-right',
+        transition: 'flip'
+      })
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error)
+    tokenMessage.value = { 
+      type: 'error', 
+      text: 'Ошибка при обновлении токена. Попробуйте перезагрузить страницу или выполнить повторный вход.' 
+    }
+    
+    toast('Ошибка обновления токена', {
+      theme: 'dark',
+      type: 'error',
+      position: 'bottom-right',
+      transition: 'flip'
+    })
+  } finally {
+    isRefreshing.value = false
+    
+    // Clear success message after 5 seconds
+    if (tokenMessage.value?.type === 'success') {
+      setTimeout(() => {
+        if (tokenMessage.value?.type === 'success') {
+          tokenMessage.value = null
+        }
+      }, 5000)
+    }
+  }
+}
+
+// Existing profile form code
 const profileSettingsForm = reactive({
   first_name: user.first_name,
   last_name: user.last_name,
@@ -248,6 +372,51 @@ const activeTimeZone = ref(Intl.DateTimeFormat().resolvedOptions().timeZone)
             width: 100%;
         }
     }
-}
+    
+    /* New styles for token section */
+    .token-info {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: rgba(33, 150, 243, 0.05);
+        border-radius: 4px;
+        border: 1px solid rgba(33, 150, 243, 0.2);
+        
+        p {
+            margin-bottom: 5px;
+            
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+        
+        strong {
+            color: var(--text-color);
+        }
+    }
 
+    .token-message {
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        
+        &.success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+        
+        &.error {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #F44336;
+            border: 1px solid #F44336;
+        }
+        
+        &.info {
+            background-color: rgba(33, 150, 243, 0.1);
+            color: #2196F3;
+            border: 1px solid #2196F3;
+        }
+    }
+}
 </style>
