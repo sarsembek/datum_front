@@ -311,14 +311,9 @@ export default class CanvasInstagramNode extends CanvasNode {
   }
 
   override saveNodeInfo (isOneSave: boolean = false): Promise<any> {
-    const hasButtons = this.nodeElements.some(ne =>
-      ne.textElement?.buttons && ne.textElement.buttons.length > 0
-    )
-
-    const nextStepId = hasButtons ? null : (this.canvasLineNode?.connectionTo?.id || null)
-
+    const nextStepId = this.canvasLineNode?.connectionTo?.id || null
     const blockData = {
-      lineNode: hasButtons ? null : this.canvasLineNode,
+      lineNode: this.canvasLineNode,
       nodeElements: this.nodeElements,
       next_step_id: nextStepId
     }
