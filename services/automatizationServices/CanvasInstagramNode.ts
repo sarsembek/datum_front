@@ -25,20 +25,35 @@ export default class CanvasInstagramNode extends CanvasNode {
   override draw (): void {
     super.draw('#747272', '#585858', 'Instagram сообщение', this.checkConnectionOver())
 
-    if (this.nodeElements.length === 0) { this.addText() }
+    if (this.nodeElements.length === 0) {
+      this.addText()
+    }
     let newHeight = 45
 
-    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+    // Draw all elements as before
     for (const [index, nodeEl] of this.nodeElements.entries()) {
-      if (nodeEl.textElement) { newHeight += this.drawTexts(nodeEl.textElement, newHeight) }
-      if (nodeEl.imageElement) { newHeight += this.drowImageEl(nodeEl.imageElement!.src, newHeight) }
-      if (nodeEl.delayElement) { newHeight += this.drowDelayEl(nodeEl.delayElement.delayTime, newHeight) }
+      if (nodeEl.textElement) {
+        newHeight += this.drawTexts(nodeEl.textElement, newHeight)
+      }
+      if (nodeEl.imageElement) {
+        newHeight += this.drowImageEl(nodeEl.imageElement!.src, newHeight)
+      }
+      if (nodeEl.delayElement) {
+        newHeight += this.drowDelayEl(nodeEl.delayElement.delayTime, newHeight)
+      }
       this.height = newHeight * this.scale
     }
 
     this.height += 45 * this.scale
 
-    this.redrawCanvasLineNode()
+    // Only draw the bottom connector if there are no buttons
+    const hasButtons = this.nodeElements.some(ne =>
+      ne.textElement?.buttons && ne.textElement.buttons.length > 0
+    )
+
+    if (!hasButtons) {
+      this.redrawCanvasLineNode()
+    }
   }
 
   checkConnectionOver () {
@@ -77,7 +92,9 @@ export default class CanvasInstagramNode extends CanvasNode {
       if (button.lineNode.connectionTo) {
         const automatizationStore = useAutomatizationStore()
         const connectionObj = automatizationStore.objects.find(obj => obj.id === button.lineNode.connectionTo.id)
-        if (connectionObj && connectionObj.nodeType === 'canvas_instagram_node') { button.type = 'instagram' }
+        if (connectionObj && connectionObj.nodeType === 'canvas_instagram_node') {
+          button.type = 'instagram'
+        }
       }
 
       button.lineNode.draw()
@@ -102,7 +119,11 @@ export default class CanvasInstagramNode extends CanvasNode {
     isPlaceholder = true
   ) {
     this.nodeElements.push({
-      textElement: { text, buttons, isPlaceholder }
+      textElement: {
+        text,
+        buttons,
+        isPlaceholder
+      }
     })
   }
 
@@ -226,7 +247,9 @@ export default class CanvasInstagramNode extends CanvasNode {
     if (button.lineNode.connectionTo) {
       const automatizationStore = useAutomatizationStore()
       const connectionObj = automatizationStore.objects.find(obj => obj.id === button.lineNode.connectionTo.id)
-      if (connectionObj && connectionObj.nodeType === 'canvas_instagram_node') { button.type = 'instagram' }
+      if (connectionObj && connectionObj.nodeType === 'canvas_instagram_node') {
+        button.type = 'instagram'
+      }
     }
 
     return 40
@@ -288,9 +311,14 @@ export default class CanvasInstagramNode extends CanvasNode {
   }
 
   override saveNodeInfo (isOneSave: boolean = false): Promise<any> {
-    const nextStepId = this.canvasLineNode?.connectionTo?.id || null
+    const hasButtons = this.nodeElements.some(ne =>
+      ne.textElement?.buttons && ne.textElement.buttons.length > 0
+    )
+
+    const nextStepId = hasButtons ? null : (this.canvasLineNode?.connectionTo?.id || null)
+
     const blockData = {
-      lineNode: this.canvasLineNode,
+      lineNode: hasButtons ? null : this.canvasLineNode,
       nodeElements: this.nodeElements,
       next_step_id: nextStepId
     }
