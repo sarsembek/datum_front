@@ -135,6 +135,8 @@ const facebookPagesKey = ref<number>(0)
 const route = useRoute()
 
 onMounted(() => {
+  console.log('fbAuthenticated', fbAuthenticated.value)
+  console.log('codeeee', route.query.code)
   if (route.query.code && !fbAuthenticated.value) {
     console.log('facebookPooling started')
     facebookPooling()

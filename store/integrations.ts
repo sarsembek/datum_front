@@ -25,6 +25,7 @@ export const useFbStore = defineStore('integration', {
         }
       })
 
+      console.log(data, 'data of facebook')
       // The rest of the function remains the same
       if (data) {
         const fbInfo = await data[0]
