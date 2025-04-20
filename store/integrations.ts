@@ -109,6 +109,7 @@ export const useFbStore = defineStore('integration', {
       try {
         // Check stored auth flow
         const authFlow = localStorage.getItem('authFlow')
+        console.log('Auth flow:', authFlow)
 
         if (authFlow === 'instagram') {
           // Clear the flag
@@ -136,7 +137,7 @@ export const useFbStore = defineStore('integration', {
 
       try {
         const data: any = await useAuthFetch(
-          `/api/v1/integrations/instagram-update/${this.fbId}`,
+          `/api/v1/integrations/instagram-update/${this.fbId}/`,
           {
             method: 'patch',
             headers: {
