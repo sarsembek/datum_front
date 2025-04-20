@@ -1,5 +1,26 @@
 <template>
     <div class="cms">
+        <!-- Instagram Alert Banner that appears at the top of the page -->
+        <div
+            v-if="fbAuthenticated && !isInstagramAuthenticated"
+            class="instagram-alert-banner"
+        >
+            <div class="instagram-alert-content">
+                <svg-icon
+                    icon="instagram"
+                    width="24"
+                    height="24"
+                    class="instagram-icon"
+                />
+                <span>Подключите свой аккаунт Instagram для получения расширенных возможностей</span>
+                <button-custom
+                    class="instagram-confirm-btn"
+                    value="Подключить"
+                    @click="getInstagramAuthorizeUrl"
+                />
+            </div>
+        </div>
+
         <div
             v-if="fbAuthenticated && !isFirstLogin"
             :key="cmsKey"
@@ -61,8 +82,9 @@ import { useFbStore } from '~/store/integrations'
 import { useAutomatizationStore } from '~/store/automatization'
 import { useUserStore } from '~/store/user'
 
-const { getFacebookUser, facebookPooling } = useFbStore()
-const { fbAuthenticated, isFirstLogin, isFbClientAdding } = storeToRefs(useFbStore())
+const fbStore = useFbStore()
+const { getFacebookUser, getInstagramAuthorizeUrl, handleAuthRedirect } = fbStore
+const { fbAuthenticated, isFirstLogin, isFbClientAdding, isInstagramAuthenticated } = storeToRefs(fbStore)
 const user = useUserStore().user || await useUserStore().getUser()
 
 const { openCreatePopup } = useAutomatizationStore()
@@ -76,8 +98,9 @@ await getFacebookUser()
 const route = useRoute()
 
 onMounted(() => {
-  if (route.query.code && !fbAuthenticated.value) {
-    facebookPooling()
+  // Use the new unified auth redirect handler if code is present in URL
+  if (route.query.code) {
+    handleAuthRedirect()
   }
 })
 </script>
@@ -86,6 +109,58 @@ onMounted(() => {
 .cms{
     width: 100%;
     height: 100%;
+
+    // Instagram alert styles
+    .instagram-alert-banner {
+        width: 100%;
+        background: linear-gradient(135deg, #8a3ab9 0%, #e95950 50%, #bc2a8d 100%);
+        padding: 10px 0;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .instagram-alert-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        gap: 15px;
+
+        span {
+            font-weight: 500;
+            font-size: 16px;
+        }
+    }
+
+    .instagram-icon {
+        flex-shrink: 0;
+    }
+
+    .instagram-confirm-btn {
+        background: white !important;
+        color: #8a3ab9 !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        padding: 8px 16px !important;
+        transition: transform 0.2s !important;
+
+        &:hover {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    // Existing styles
     .cms-nav{
         position: absolute;
         left: 0;

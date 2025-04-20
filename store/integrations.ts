@@ -8,13 +8,13 @@ export const useFbStore = defineStore('integration', {
     fbActivePageId: null as number | null,
     facebookPages: [],
     isFbClientAdding: false,
-    automatizationMessages: [] as { id: number; [key: string]: any }[]
+    automatizationMessages: [] as { id: number; [key: string]: any }[],
+    isInstagramAuthenticated: false, // Add new state property for Instagram authentication
+    authProcessing: false // Flag to prevent duplicate processing
   }),
   actions: {
     async getFacebookUser () {
       const store = useFbStore()
-      const config = useRuntimeConfig()
-      const dataApiUrl = config.public.dataApiUrl
 
       // Use the useAuthFetch (which we've updated to handle URLs properly)
       const data: any = await useAuthFetch('/api/v1/integrations/', {
@@ -33,11 +33,166 @@ export const useFbStore = defineStore('integration', {
           store.fbAuthenticated = true
           store.fbId = fbInfo.id
           store.fbActivePageId = fbInfo.page_id
+
+          // Check Instagram authentication status
+          await this.checkInstagramStatus()
         } else {
           store.fbAuthenticated = false
         }
       }
     },
+
+    // Check Instagram authentication status
+    async checkInstagramStatus () {
+      if (!this.fbId) {
+        return
+      }
+
+      try {
+        const data: any = await useAuthFetch(
+          `/api/v1/integrations/instagram-update/${this.fbId}`,
+          {
+            method: 'get',
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              accept: 'application/json'
+            }
+          }
+        )
+
+        this.isInstagramAuthenticated = !(data && data.is_authenticated === false)
+      } catch (error) {
+        console.error('Failed to check Instagram status:', error)
+        this.isInstagramAuthenticated = false
+      }
+    },
+
+    // Get Instagram authorization URL and set localStorage flag
+    async getInstagramAuthorizeUrl () {
+      try {
+        // Set a flag in localStorage to indicate Instagram flow
+        localStorage.setItem('authFlow', 'instagram')
+
+        const data: any = await useAuthFetch(
+          '/api/v1/integrations/instagram-update/get_authorize_url',
+          {
+            method: 'get',
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              accept: 'application/json'
+            }
+          }
+        )
+
+        if (data && data.authorize_url) {
+          // Redirect to the authorization URL
+          window.location.href = data.authorize_url
+        }
+      } catch (error) {
+        console.error('Failed to get Instagram authorization URL:', error)
+      }
+    },
+
+    // Central handler for auth redirects
+    async handleAuthRedirect () {
+      const route = useRoute()
+      if (!route.query.code) {
+        return
+      }
+
+      // Prevent duplicate processing
+      if (this.authProcessing) {
+        return
+      }
+      this.authProcessing = true
+
+      try {
+        // Check stored auth flow
+        const authFlow = localStorage.getItem('authFlow')
+
+        if (authFlow === 'instagram') {
+          // Clear the flag
+          localStorage.removeItem('authFlow')
+          // Handle Instagram auth
+          await this.handleInstagramAuth(route.query.code as string)
+        } else {
+          // Default to Facebook auth
+          await this.handleFacebookAuth(route.query.code as string)
+        }
+      } catch (error) {
+        console.error('Error handling auth redirect:', error)
+      } finally {
+        this.authProcessing = false
+      }
+    },
+
+    // Process Instagram auth code
+    async handleInstagramAuth (code: string) {
+      console.log('Processing Instagram auth code')
+
+      if (!this.fbId) {
+        await this.getFacebookUser()
+      }
+
+      try {
+        const data: any = await useAuthFetch(
+          `/api/v1/integrations/instagram-update/${this.fbId}`,
+          {
+            method: 'patch',
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              accept: 'application/json'
+            },
+            body: JSON.stringify({
+              code: code
+            })
+          }
+        )
+
+        if (data) {
+          console.log('Instagram auth successful', data)
+          this.isInstagramAuthenticated = true
+          // Refresh authentication status after successful connection
+          await this.checkInstagramStatus()
+        }
+      } catch (error) {
+        console.error('Failed to process Instagram auth code:', error)
+      }
+    },
+
+    // Process Facebook auth code
+    async handleFacebookAuth (code: string) {
+      console.log('Processing Facebook auth code')
+      this.isFbClientAdding = true
+
+      try {
+        const data: any = await $fetch(
+          `/api/v1/integrations/get-token/?code=${code}`,
+          {
+            method: 'GET',
+            credentials: 'include' // Include cookies
+          }
+        )
+
+        console.log(data, 'Facebook token data')
+        if (data) {
+          const longToken = await this.createLongLivedToken(data.access_token)
+          await this.addFacebookUser(longToken)
+        }
+      } catch (error) {
+        console.error('Failed to process Facebook auth code:', error)
+        this.isFbClientAdding = false
+      }
+    },
+
+    // Keep original method for backward compatibility
+    async facebookPooling () {
+      const route = useRoute()
+      if (route.query.code) {
+        await this.handleFacebookAuth(route.query.code as string)
+      }
+    },
+
     async getFacebookPages () {
       if (this.facebookPages.length === 0) {
         if (!this.fbId) {
@@ -57,6 +212,7 @@ export const useFbStore = defineStore('integration', {
       }
       return this.facebookPages
     },
+
     async getInstagramPosts () {
       if (!this.fbId) {
         await this.getFacebookUser()
@@ -73,6 +229,7 @@ export const useFbStore = defineStore('integration', {
       )
       return data
     },
+
     async updateFacebookUser (
       accessToken = null,
       pageId = null,
@@ -105,6 +262,7 @@ export const useFbStore = defineStore('integration', {
         this.isFirstLogin = false
       }
     },
+
     async addFacebookUser (accessToken: string) {
       const data: any = await useAuthFetch('/api/v1/integrations/', {
         method: 'post',
@@ -123,24 +281,7 @@ export const useFbStore = defineStore('integration', {
       }
       return data
     },
-    async facebookPooling () {
-      const route = useRoute()
-      console.log(route.query.code, 'code of facebook')
-      this.isFbClientAdding = true
 
-      const data: any = await $fetch(
-        `/api/v1/integrations/get-token/?code=${route.query.code}`,
-        {
-          method: 'GET',
-          credentials: 'include' // Add this to include cookies
-        }
-      )
-      console.log(data, 'data short')
-      if (data) {
-        const longToken = await this.createLongLivedToken(data.access_token)
-        this.addFacebookUser(longToken)
-      }
-    },
     async createLongLivedToken (accessToken: any) {
       // eslint-disable-next-line max-len
       const data: any = await $fetch(
@@ -153,6 +294,7 @@ export const useFbStore = defineStore('integration', {
       console.log(data, 'data long')
       return data.access_token
     },
+
     async getAutomatizationMessages () {
       const data: any = await useAuthFetch(
         '/api/v1/integrations/instagram-automatization-message',
@@ -167,12 +309,14 @@ export const useFbStore = defineStore('integration', {
       this.automatizationMessages = data
       return this.automatizationMessages
     },
+
     changeAutomatizationMessage (id: number, data: any) {
       const automatizationMessageIndex = this.automatizationMessages.findIndex(
         message => message.id === id
       )
       this.automatizationMessages[automatizationMessageIndex] = data
     },
+
     addAutomatizationMessage (e: any) {
       this.automatizationMessages.push(e)
     }
