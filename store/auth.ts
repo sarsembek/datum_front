@@ -11,15 +11,28 @@ interface UserInterface {
   active_project_id: number;
 }
 
+interface SubscriptionInterface {
+  plan: string | null;
+  expires_at?: string;
+  status?: string;
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     accessToken: '',
     accessTokenCreatedAt: null,
     activeProject: useCookie('projectId').value || null,
     user: null as UserInterface | null,
+    subscription: null as SubscriptionInterface | null,
+    showSubscriptionModal: false,
     isAuthError: false, // Flag to track auth state
     isCheckingAuth: false
   }),
+  getters: {
+    hasValidSubscription: (state) => {
+      return state.subscription?.plan !== null && state.subscription?.plan !== undefined
+    }
+  },
   actions: {
     // Instead of trying to access HTTP-only cookie, we'll check auth status with an API call
     async checkAuthentication (setErrorState = true) {
@@ -68,8 +81,6 @@ export const useAuthStore = defineStore('auth', {
         }
         return false
       } catch (error) {
-        console.log('Authentication check failed:', error)
-
         // Only set error state when explicitly requested
         if (setErrorState) {
           this.isAuthError = true
@@ -96,7 +107,6 @@ export const useAuthStore = defineStore('auth', {
         // Token refresh SHOULD use AUTH_API_URL
         const AUTH_API_URL = config.public.apiUrl
 
-        console.log('Refreshing token from:', `${AUTH_API_URL}/auth/refresh-token`)
         // Using withCredentials to send cookies
         const response = await axios.get(`${AUTH_API_URL}/auth/refresh-token`, {
           withCredentials: true // This is critical for cross-domain cookie usage
@@ -116,7 +126,6 @@ export const useAuthStore = defineStore('auth', {
         }
         return false
       } catch (error) {
-        console.error('Token refresh failed', error)
         this.isAuthError = true
         return false
       }
@@ -129,7 +138,6 @@ export const useAuthStore = defineStore('auth', {
         // Use dataApiUrl for user info, not apiUrl
         const API_URL = config.public.dataApiUrl
 
-        console.log('Fetching user info from:', `${API_URL}/api/v1/users/${userId}`)
         // Use axios with withCredentials
         const response = await axios.get(`${API_URL}/api/v1/users/${userId}`, {
           withCredentials: true
@@ -140,7 +148,6 @@ export const useAuthStore = defineStore('auth', {
         }
         return response.data
       } catch (error) {
-        console.error('Failed to fetch user info', error)
         return null
       }
     },
@@ -158,7 +165,22 @@ export const useAuthStore = defineStore('auth', {
       this.accessToken = ''
       this.accessTokenCreatedAt = null
       this.user = null
+      this.subscription = null
+      this.showSubscriptionModal = false
       useCookie('projectId').value = null
+    },
+
+    // Subscription management methods
+    setSubscriptionData (subscription: SubscriptionInterface) {
+      this.subscription = subscription
+
+      // Check if subscription plan is null and show modal accordingly
+      const hasValidSubscription = subscription?.plan !== null && subscription?.plan !== undefined
+      this.showSubscriptionModal = !hasValidSubscription
+    },
+
+    hideSubscriptionModal () {
+      this.showSubscriptionModal = false
     }
   }
 })

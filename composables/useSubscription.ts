@@ -1,36 +1,14 @@
 import { useAuthStore } from '~/store/auth'
 
-export default defineNuxtRouteMiddleware(async (to) => {
+export async function checkUserSubscription(): Promise<boolean> {
+  const config = useRuntimeConfig()
   const authStore = useAuthStore()
-
-  if (process.client) {
-    // Check authentication without setting error state
-    const isAuthenticated = await authStore.checkAuthentication(false)
-
-    // Only set error state for protected routes that need authentication
-    if (!isAuthenticated && to.meta.requiresAuth !== false) {
-      authStore.isAuthError = true
-      // No redirect - we'll show a message instead
-    } else {
-      // If authenticated or route doesn't require auth, ensure error state is cleared
-      authStore.isAuthError = false
-      
-      // Check subscription status for authenticated users
-      if (isAuthenticated) {
-        await checkSubscriptionStatus(authStore)
-      }
-    }
-  }
-})
-
-// Function to check subscription status
-async function checkSubscriptionStatus(authStore: any) {
+  
   try {
-    const config = useRuntimeConfig()
     const authApiUrl = config.public.apiUrl
-    
     console.log('Checking subscription status from:', `${authApiUrl}/auth/profile`)
     
+    // Use fetch with credentials to include cookies
     const response = await fetch(`${authApiUrl}/auth/profile`, {
       credentials: 'include',
       headers: {
@@ -49,10 +27,24 @@ async function checkSubscriptionStatus(authStore: any) {
       // Always set subscription data (even if null)
       const subscription = data.subscription || { plan: null }
       authStore.setSubscriptionData(subscription)
+
+      return authStore.hasValidSubscription
     }
+
+    return false
   } catch (error) {
     console.error('Failed to check subscription status:', error)
     // On error, don't show modal to avoid false positives
     authStore.showSubscriptionModal = false
+    return true // Assume valid to avoid blocking access on API errors
+  }
+}
+
+export const useSubscription = () => {
+  const authStore = useAuthStore()
+
+  return {
+    checkSubscriptionStatus: checkUserSubscription,
+    hideSubscriptionModal: () => authStore.hideSubscriptionModal()
   }
 }

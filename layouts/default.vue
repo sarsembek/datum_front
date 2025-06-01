@@ -7,10 +7,17 @@
             </div>
         </div>
         <AuthError />
+        <SubscriptionRequiredModal
+            v-if="authStore.showSubscriptionModal"
+            :show="authStore.showSubscriptionModal"
+        />
     </div>
 </template>
 
 <script setup>
+import { useAuthStore } from '~/store/auth'
+
+const authStore = useAuthStore()
 </script>
 
 <style lang="scss" scoped>
