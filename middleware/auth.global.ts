@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (process.client) {
     // Always check user status from the new endpoint
     await checkUserSubscriptionStatus(authStore)
-    
+
     // Then check if we need to show auth error for protected routes
     // Only show auth error if we don't have a user AND the route requires auth
     if (!authStore.user && to.meta.requiresAuth !== false) {
@@ -21,11 +21,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 // Function to check user subscription status from new endpoint
 async function checkUserSubscriptionStatus(authStore: any) {
   try {
-    const config = useRuntimeConfig()
-    const dataApiUrl = config.public.dataApiUrl
-    
+    const dataApiUrl = 'https://datum.starmake.ai'
+
     console.log('Middleware: Checking user status from:', `${dataApiUrl}/api/v1/auth/user/`)
-    
+
     const response = await fetch(`${dataApiUrl}/api/v1/auth/user/`, {
       credentials: 'include',
       headers: {
@@ -36,7 +35,7 @@ async function checkUserSubscriptionStatus(authStore: any) {
     if (response.ok) {
       const data = await response.json()
       console.log('Middleware: User data received:', data)
-      
+
       // Update user data in store
       if (data) {
         authStore.user = {
@@ -48,7 +47,7 @@ async function checkUserSubscriptionStatus(authStore: any) {
           phone: null, // Not provided in new response
           active_project_id: null // Not provided in new response
         }
-        
+
         // Set subscription status based on is_payed field
         console.log('Middleware: Setting payment status to:', data.is_payed)
         authStore.setUserPaymentStatus(data.is_payed)
