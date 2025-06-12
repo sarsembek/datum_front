@@ -4,21 +4,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const authStore = useAuthStore()
 
   if (process.client) {
-    // Check authentication without setting error state
-    const isAuthenticated = await authStore.checkAuthentication(false)
-
-    // Only set error state for protected routes that need authentication
-    if (!isAuthenticated && to.meta.requiresAuth !== false) {
+    // Always check user status from the new endpoint
+    await checkUserSubscriptionStatus(authStore)
+    
+    // Then check if we need to show auth error for protected routes
+    if (!authStore.user && to.meta.requiresAuth !== false) {
       authStore.isAuthError = true
-      // No redirect - we'll show a message instead
     } else {
-      // If authenticated or route doesn't require auth, ensure error state is cleared
       authStore.isAuthError = false
-      
-      // Check subscription status for authenticated users
-      if (isAuthenticated) {
-        await checkUserSubscriptionStatus(authStore)
-      }
     }
   }
 })
@@ -29,6 +22,8 @@ async function checkUserSubscriptionStatus(authStore: any) {
     const config = useRuntimeConfig()
     const dataApiUrl = config.public.dataApiUrl
     
+    console.log('Middleware: Checking user status from:', `${dataApiUrl}/api/v1/auth/user/`)
+    
     const response = await fetch(`${dataApiUrl}/api/v1/auth/user/`, {
       credentials: 'include',
       headers: {
@@ -38,6 +33,7 @@ async function checkUserSubscriptionStatus(authStore: any) {
 
     if (response.ok) {
       const data = await response.json()
+      console.log('Middleware: User data received:', data)
       
       // Update user data in store
       if (data) {
@@ -52,13 +48,17 @@ async function checkUserSubscriptionStatus(authStore: any) {
         }
         
         // Set subscription status based on is_payed field
+        console.log('Middleware: Setting payment status to:', data.is_payed)
         authStore.setUserPaymentStatus(data.is_payed)
+        console.log('Middleware: shouldBlockApp is now:', authStore.shouldBlockApp)
       }
     } else {
+      console.log('Middleware: Failed to fetch user data:', response.status)
       // On error, don't show subscription modal to avoid false positives
       authStore.showSubscriptionModal = false
     }
   } catch (error) {
+    console.error('Middleware: Error checking user status:', error)
     // On error, don't show subscription modal to avoid false positives
     authStore.showSubscriptionModal = false
   }

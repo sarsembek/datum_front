@@ -54,40 +54,13 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.isCheckingAuth = true
 
-        if (this.user && this.isPayed !== null) {
-          // If we have user data and payment status, assume we're authenticated
+        // If we have user data, assume we're authenticated
+        if (this.user) {
           this.isAuthError = false
           return true
         }
 
-        const config = useRuntimeConfig()
-        const API_URL = config.public.dataApiUrl
-
-        // Use the new user endpoint directly
-        const response = await axios.get(`${API_URL}/api/v1/auth/user/`, {
-          withCredentials: true
-        })
-
-        if (response.status === 200 && response.data) {
-          // Store user data from new endpoint format
-          this.user = {
-            id: response.data.pk,
-            email: response.data.email,
-            first_name: response.data.first_name,
-            last_name: response.data.last_name,
-            avatar: null, // Not provided in new response
-            phone: null, // Not provided in new response
-            active_project_id: null // Not provided in new response
-          }
-          
-          // Set payment status
-          this.setUserPaymentStatus(response.data.is_payed)
-          
-          this.isAuthError = false
-          return true
-        }
-
-        // If we get here, request didn't fail but we're not sure about auth status
+        // If no user data and we should set error state, mark as unauthenticated
         if (setErrorState) {
           this.isAuthError = true
         }
