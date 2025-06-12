@@ -8,9 +8,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
     await checkUserSubscriptionStatus(authStore)
     
     // Then check if we need to show auth error for protected routes
+    // Only show auth error if we don't have a user AND the route requires auth
     if (!authStore.user && to.meta.requiresAuth !== false) {
       authStore.isAuthError = true
     } else {
+      // If we have a user (regardless of payment status) or route doesn't require auth, clear auth error
       authStore.isAuthError = false
     }
   }

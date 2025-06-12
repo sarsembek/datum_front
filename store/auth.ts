@@ -40,7 +40,8 @@ export const useAuthStore = defineStore('auth', {
     },
     // New getter to determine if the app should be blocked
     shouldBlockApp: (state) => {
-      return state.isPayed === false && !state.isAuthError
+      // If user exists and hasn't paid, block the app regardless of auth error state
+      return state.user && state.isPayed === false
     }
   },
   actions: {

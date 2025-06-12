@@ -8,6 +8,7 @@
         </div>
         <AuthError />
         <PaymentWarning />
+        <DebugAuth />
         <SubscriptionRequiredModal
             v-if="authStore.showSubscriptionModal"
             :show="authStore.showSubscriptionModal"
