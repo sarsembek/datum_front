@@ -8,7 +8,7 @@ interface UserInterface {
   last_name: string;
   avatar: string | null;
   phone: string | null;
-  active_project_id: number;
+  active_project_id: number | null;
 }
 
 interface SubscriptionInterface {
@@ -26,11 +26,21 @@ export const useAuthStore = defineStore('auth', {
     subscription: null as SubscriptionInterface | null,
     showSubscriptionModal: false,
     isAuthError: false, // Flag to track auth state
-    isCheckingAuth: false
+    isCheckingAuth: false,
+    isPayed: true, // New field to track payment status - default true to avoid blocking before check
+    showPaymentWarning: false // New field to control payment warning display
   }),
   getters: {
     hasValidSubscription: (state) => {
       return state.subscription?.plan !== null && state.subscription?.plan !== undefined
+    },
+    // New getter to check if user has paid subscription
+    hasActivePaidSubscription: (state) => {
+      return state.isPayed === true
+    },
+    // New getter to determine if the app should be blocked
+    shouldBlockApp: (state) => {
+      return state.isPayed === false && !state.isAuthError
     }
   },
   actions: {
@@ -44,8 +54,8 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.isCheckingAuth = true
 
-        if (this.user) {
-          // If we have user data, assume we're authenticated
+        if (this.user && this.isPayed !== null) {
+          // If we have user data and payment status, assume we're authenticated
           this.isAuthError = false
           return true
         }
@@ -53,24 +63,26 @@ export const useAuthStore = defineStore('auth', {
         const config = useRuntimeConfig()
         const API_URL = config.public.dataApiUrl
 
-        // Make a lightweight auth check request that will succeed if cookie is valid
-        const response = await axios.get(`${API_URL}/api/v1/auth/check`, {
+        // Use the new user endpoint directly
+        const response = await axios.get(`${API_URL}/api/v1/auth/user/`, {
           withCredentials: true
-        }).catch((error) => {
-          if (error.response?.status === 404) {
-            // If endpoint doesn't exist, try another one
-            return axios.get(`${API_URL}/api/v1/auth/user`, {
-              withCredentials: true
-            })
-          }
-          throw error
         })
 
-        if (response.status === 200) {
-          if (response.data) {
-            // Store user data if available
-            this.user = response.data
+        if (response.status === 200 && response.data) {
+          // Store user data from new endpoint format
+          this.user = {
+            id: response.data.pk,
+            email: response.data.email,
+            first_name: response.data.first_name,
+            last_name: response.data.last_name,
+            avatar: null, // Not provided in new response
+            phone: null, // Not provided in new response
+            active_project_id: null // Not provided in new response
           }
+          
+          // Set payment status
+          this.setUserPaymentStatus(response.data.is_payed)
+          
           this.isAuthError = false
           return true
         }
@@ -167,6 +179,8 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.subscription = null
       this.showSubscriptionModal = false
+      this.isPayed = true // Reset to default
+      this.showPaymentWarning = false
       useCookie('projectId').value = null
     },
 
@@ -181,6 +195,29 @@ export const useAuthStore = defineStore('auth', {
 
     hideSubscriptionModal () {
       this.showSubscriptionModal = false
+    },
+
+    // New method to handle payment status from the new endpoint
+    setUserPaymentStatus (isPayed: boolean) {
+      this.isPayed = isPayed
+      this.showPaymentWarning = !isPayed
+      
+      // If user is not paid, they shouldn't see the old subscription modal
+      if (!isPayed) {
+        this.showSubscriptionModal = false
+      }
+    },
+
+    // Method to redirect to payment page
+    redirectToPaymentPage () {
+      if (process.client) {
+        window.location.href = 'https://www.starmake.ai/profile/plan'
+      }
+    },
+
+    // Method to hide payment warning (if needed)
+    hidePaymentWarning () {
+      this.showPaymentWarning = false
     }
   }
 })

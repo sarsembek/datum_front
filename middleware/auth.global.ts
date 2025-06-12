@@ -17,13 +17,59 @@ export default defineNuxtRouteMiddleware(async (to) => {
       
       // Check subscription status for authenticated users
       if (isAuthenticated) {
-        await checkSubscriptionStatus(authStore)
+        await checkUserSubscriptionStatus(authStore)
       }
     }
   }
 })
 
-// Function to check subscription status
+// Function to check user subscription status from new endpoint
+async function checkUserSubscriptionStatus(authStore: any) {
+  try {
+    const config = useRuntimeConfig()
+    const dataApiUrl = config.public.dataApiUrl
+    
+    console.log('Checking user subscription status from:', `${dataApiUrl}/api/v1/auth/user/`)
+    
+    const response = await fetch(`${dataApiUrl}/api/v1/auth/user/`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log('User data received:', data)
+      
+      // Update user data in store
+      if (data) {
+        authStore.user = {
+          id: data.pk,
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          avatar: null, // Not provided in new response
+          phone: null, // Not provided in new response
+          active_project_id: null // Not provided in new response
+        }
+        
+        // Set subscription status based on is_payed field
+        authStore.setUserPaymentStatus(data.is_payed)
+      }
+    } else {
+      console.error('Failed to fetch user data:', response.status, response.statusText)
+      // On error, don't show subscription modal to avoid false positives
+      authStore.showSubscriptionModal = false
+    }
+  } catch (error) {
+    console.error('Failed to check user subscription status:', error)
+    // On error, don't show subscription modal to avoid false positives
+    authStore.showSubscriptionModal = false
+  }
+}
+
+// Old checkSubscriptionStatus function - keeping as requested (not deleted)
 async function checkSubscriptionStatus(authStore: any) {
   try {
     const config = useRuntimeConfig()
