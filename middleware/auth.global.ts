@@ -29,8 +29,6 @@ async function checkUserSubscriptionStatus(authStore: any) {
     const config = useRuntimeConfig()
     const dataApiUrl = config.public.dataApiUrl
     
-    console.log('Checking user subscription status from:', `${dataApiUrl}/api/v1/auth/user/`)
-    
     const response = await fetch(`${dataApiUrl}/api/v1/auth/user/`, {
       credentials: 'include',
       headers: {
@@ -40,7 +38,6 @@ async function checkUserSubscriptionStatus(authStore: any) {
 
     if (response.ok) {
       const data = await response.json()
-      console.log('User data received:', data)
       
       // Update user data in store
       if (data) {
@@ -58,47 +55,13 @@ async function checkUserSubscriptionStatus(authStore: any) {
         authStore.setUserPaymentStatus(data.is_payed)
       }
     } else {
-      console.error('Failed to fetch user data:', response.status, response.statusText)
       // On error, don't show subscription modal to avoid false positives
       authStore.showSubscriptionModal = false
     }
   } catch (error) {
-    console.error('Failed to check user subscription status:', error)
     // On error, don't show subscription modal to avoid false positives
     authStore.showSubscriptionModal = false
   }
 }
 
-// Old checkSubscriptionStatus function - keeping as requested (not deleted)
-async function checkSubscriptionStatus(authStore: any) {
-  try {
-    const config = useRuntimeConfig()
-    const authApiUrl = config.public.apiUrl
-    
-    console.log('Checking subscription status from:', `${authApiUrl}/auth/profile`)
-    
-    const response = await fetch(`${authApiUrl}/auth/profile`, {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
 
-    if (response.ok) {
-      const data = await response.json()
-      
-      // Update user data in store if available
-      if (data.user) {
-        authStore.user = data.user
-      }
-      
-      // Always set subscription data (even if null)
-      const subscription = data.subscription || { plan: null }
-      authStore.setSubscriptionData(subscription)
-    }
-  } catch (error) {
-    console.error('Failed to check subscription status:', error)
-    // On error, don't show modal to avoid false positives
-    authStore.showSubscriptionModal = false
-  }
-}

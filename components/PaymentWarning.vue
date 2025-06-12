@@ -14,8 +14,6 @@
                         <button
                     class="payment-warning__button"
                     @click="handlePaymentClick"
-                    @mousedown="console.log('Button mousedown')"
-                    @mouseup="console.log('Button mouseup')"
                 >
                     Оплатить
                 </button>
@@ -30,18 +28,7 @@ import { useAuthStore } from '~/store/auth'
 const authStore = useAuthStore()
 
 const handlePaymentClick = () => {
-    console.log('Payment button clicked!')
-    
-    // Try the store method first
     authStore.redirectToPaymentPage()
-    
-    // Fallback direct redirect after a small delay
-    setTimeout(() => {
-        if (process.client) {
-            console.log('Fallback redirect triggered')
-            window.location.href = 'https://www.starmake.ai/profile/plan'
-        }
-    }, 100)
 }
 </script>
 
