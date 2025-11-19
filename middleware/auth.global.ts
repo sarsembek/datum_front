@@ -24,13 +24,22 @@ async function checkUserSubscriptionStatus(authStore: any) {
     const dataApiUrl = 'https://datum.starmake.ai'
 
     console.log('Middleware: Checking user status from:', `${dataApiUrl}/api/v1/auth/user/`)
+    
+    // Debug: Check if cookie exists before making request
+    const cookiesBeforeRequest = document.cookie
+    const hasAccessToken = cookiesBeforeRequest.includes('access_token=')
+    console.log('🍪 Cookies before request:', cookiesBeforeRequest)
+    console.log('🔑 Has access_token cookie:', hasAccessToken)
 
     const response = await fetch(`${dataApiUrl}/api/v1/auth/user/`, {
-      credentials: 'include',
+      credentials: 'include', // CRITICAL: Must include credentials to send cookies
       headers: {
         'Content-Type': 'application/json'
       }
     })
+    
+    // Debug: Log response status
+    console.log('📡 Response status:', response.status, response.statusText)
 
     if (response.ok) {
       const data = await response.json()
