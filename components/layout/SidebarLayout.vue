@@ -190,7 +190,7 @@ const activePath = (path: string) => {
         width: 70px;
     }
     &_maximize{
-        width: 279px;
+        width: 280px;
         .sidebar-item{
             &_toggle{
                 padding: 0 !important;
